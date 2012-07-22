@@ -1,16 +1,18 @@
 from decimal import Decimal
 from BaseController import BaseController
-import tornado.ioloop
-import tornado.web
 import re
+
+from twisted.internet import defer
+
 
 
 class InfoController(BaseController):
+    @defer.inlineCallbacks
     def get(self):
         """Serves a GET request.
         """
         server = self.get_argument("server")
-        redis_info = self.stats_provider.get_info(server)
+        redis_info = yield self.stats_provider.get_info(server)
         databases=[]
 
         for key in sorted(redis_info.keys()):

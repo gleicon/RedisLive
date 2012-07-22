@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-import tornado.ioloop
-import tornado.options
-import tornado.web
+from twisted.internet import reactor
+import cyclone.options
+import cyclone.web
 
 from api.controller.BaseStaticFileHandler import BaseStaticFileHandler
 
@@ -15,7 +15,7 @@ from api.controller.TopKeysController import TopKeysController
 
 
 # Bootup
-application = tornado.web.Application([
+application = cyclone.web.Application([
   (r"/api/servers", ServerListController),
   (r"/api/info", InfoController),
   (r"/api/memory", MemoryController),
@@ -27,6 +27,6 @@ application = tornado.web.Application([
 
 
 if __name__ == "__main__":
-	tornado.options.parse_command_line()
-	application.listen(8888)
-	tornado.ioloop.IOLoop.instance().start()
+  cyclone.options.parse_command_line()
+  reactor.listenTCP(8888, application, interface="127.0.0.1")                 
+  reactor.run()

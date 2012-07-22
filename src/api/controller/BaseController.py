@@ -1,12 +1,11 @@
 from dataprovider.dataprovider import RedisLiveDataProvider
-import tornado.ioloop
-import tornado.web
+import cyclone.web
 import dateutil.parser
+from twisted.python import log
 
+class BaseController(cyclone.web.RequestHandler):
 
-class BaseController(tornado.web.RequestHandler):
-
-    stats_provider = RedisLiveDataProvider.get_provider()
+    stats_provider = RedisLiveDataProvider.get_provider('txredis')
 
     def datetime_to_list(self, datetime):
         """Converts a datetime to a list.

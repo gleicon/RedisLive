@@ -2,14 +2,14 @@ RedisLive
 ---------
 
 Visualize your redis instances, analyze query patterns and spikes.
+This is a port of the original Redis Line to [cyclone](http://cyclone.io) by [gleicon](http://7co.cc)
 
 ![Redis Live](https://github.com/kumarnitin/RedisLive/blob/master/design/redis-live.png?raw=true "Redis Live")
 
 Installation
 ------------
 **Install Dependencies**
-+ [tornado](https://github.com/facebook/tornado) `pip install tornado`
-+ [redis.py] (https://github.com/andymccurdy/redis-py) `pip install redis`
++ [cyclone](https://cyclone.io) `pip install cyclone`
 + [python-dateutil] (http://labix.org/python-dateutil) `pip install python-dateutil`
 
 You'll also need argparse if you're running Python < 2.7:

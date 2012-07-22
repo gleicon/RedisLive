@@ -1,12 +1,10 @@
 from BaseController import BaseController
-import tornado.ioloop
-import tornado.web
 import dateutil.parser
 import datetime
-
+from twisted.internet import defer
 
 class MemoryController(BaseController):
-
+    @defer.inlineCallbacks
     def get(self):
         server = self.get_argument("server")
         from_date = self.get_argument("from", None)
@@ -28,8 +26,9 @@ class MemoryController(BaseController):
         prev_max=0
         prev_current=0
         counter=0
-
-        for data in self.stats_provider.get_memory_info(server, start, end):
+        mi = yield self.stats_provider.get_memory_info(server, start, end)
+        
+        for data in mi:
             combined_data.append([data[0], data[1], data[2]])
 
         for data in combined_data:

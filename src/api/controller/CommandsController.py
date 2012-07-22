@@ -1,12 +1,12 @@
 from BaseController import BaseController
-import tornado.ioloop
-import tornado.web
 import dateutil.parser
 from datetime import datetime, timedelta
+from twisted.internet import defer
 
 
 class CommandsController(BaseController):
 
+    @defer.inlineCallbacks
     def get(self):
         """Serves a GET request.
         """
@@ -45,7 +45,7 @@ class CommandsController(BaseController):
           group_by = "second"
 
         combined_data = []
-        stats = self.stats_provider.get_command_stats(server, start, end,
+        stats = yield self.stats_provider.get_command_stats(server, start, end,
                                                       group_by)
         for data in stats:
             combined_data.append([data[1], data[0]])

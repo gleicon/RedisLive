@@ -1,6 +1,6 @@
-import tornado.web
+import cyclone.web
 
-class BaseStaticFileHandler(tornado.web.StaticFileHandler):
+class BaseStaticFileHandler(cyclone.web.StaticFileHandler):
 	def compute_etag(self):
 		return None
 
