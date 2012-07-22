@@ -29,6 +29,7 @@ if you don't have a spare redis instance to use to store RedisLive data, then yo
 
 **Start RedisLive**
 + start the monitoring script `./redis-monitor.py --duration=120` duration is in seconds ([see caveat](#caveat-on-monitoring-redis))
++ there is an experimentao redis-monitor-tx.tac (twistd -ny redis-monitor-tx.tac) that is meant to use txredisapi instead of the regular redis driver.
 + start the webserver `./redis-live.py`
 + RedisLive is now running @ `http://localhost:8888/index.html`
 

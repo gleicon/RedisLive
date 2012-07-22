@@ -4,6 +4,7 @@ import cyclone.redis
 import json
 import ast
 from twisted.internet import defer
+from twisted.python import log
 
 class TxRedisStatsProvider(object):
     """A Redis based persistance to store and fetch stats"""
@@ -14,7 +15,7 @@ class TxRedisStatsProvider(object):
         self.server = stats_server["server"]
         self.port = stats_server["port"]
         self.dbid = 0
-        self.poolsize = 10
+        self.poolsize = 200
         self.conn = cyclone.redis.lazyConnectionPool(self.server, self.port, self.dbid, self.poolsize)
 
     @defer.inlineCallbacks
@@ -61,43 +62,46 @@ class TxRedisStatsProvider(object):
 
         # start a redis MULTI/EXEC transaction
         pipeline = yield self.conn.multi()
-
+        log.msg('.')
         # store top command and key counts in sorted set for every second
         # top N are easily available from sorted set in redis
         # also keep a sorted set for every day
         # switch to daily stats when stats requsted are for a longer time period        
+        try:
+            command_count_key = server + ":CommandCount:" + epoch
+            yield pipeline.zincrby(command_count_key, command, 1)
 
-        command_count_key = server + ":CommandCount:" + epoch
-        yield pipeline.zincrby(command_count_key, command, 1)
+            command_count_key = server + ":DailyCommandCount:" + current_date
+            yield pipeline.zincrby(command_count_key, command, 1)
+            
+            key_count_key = server + ":KeyCount:" + epoch
+            yield pipeline.zincrby(key_count_key, keyname, 1)
 
-        command_count_key = server + ":DailyCommandCount:" + current_date
-        yield pipeline.zincrby(command_count_key, command, 1)
+            key_count_key = server + ":DailyKeyCount:" + current_date
+            yield pipeline.zincrby(key_count_key, command, 1)
 
-        key_count_key = server + ":KeyCount:" + epoch
-        yield pipeline.zincrby(key_count_key, keyname, 1)
+            # keep aggregate command in a hash
+            command_count_key = server + ":CommandCountBySecond"
+            yield pipeline.hincrby(command_count_key, epoch, 1)
 
-        key_count_key = server + ":DailyKeyCount:" + current_date
-        yield pipeline.zincrby(key_count_key, command, 1)
+            command_count_key = server + ":CommandCountByMinute"
+            field_name = current_date + ":" + str(timestamp.hour) + ":"
+            field_name += str(timestamp.minute)
+            yield pipeline.hincrby(command_count_key, field_name, 1)
 
-        # keep aggregate command in a hash
-        command_count_key = server + ":CommandCountBySecond"
-        yield pipeline.hincrby(command_count_key, epoch, 1)
+            command_count_key = server + ":CommandCountByHour"
+            field_name = current_date + ":" + str(timestamp.hour)
+            yield pipeline.hincrby(command_count_key, field_name, 1)
 
-        command_count_key = server + ":CommandCountByMinute"
-        field_name = current_date + ":" + str(timestamp.hour) + ":"
-        field_name += str(timestamp.minute)
-        yield pipeline.hincrby(command_count_key, field_name, 1)
+            command_count_key = server + ":CommandCountByDay"
+            field_name = current_date
+            yield pipeline.hincrby(command_count_key, field_name, 1)
+        except Exception, e:
+            log.msg("Provider Exception: " % e)
+            pipeline.discard()
 
-        command_count_key = server + ":CommandCountByHour"
-        field_name = current_date + ":" + str(timestamp.hour)
-        yield pipeline.hincrby(command_count_key, field_name, 1)
-
-        command_count_key = server + ":CommandCountByDay"
-        field_name = current_date
-        yield pipeline.hincrby(command_count_key, field_name, 1)
-
-        # commit transaction to redis
-        yield pipeline.commit()
+        r = yield pipeline.commit()
+        log.msg("transaction: %s" % r)
 
     @defer.inlineCallbacks
     def get_info(self, server):
